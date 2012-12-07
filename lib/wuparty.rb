@@ -282,6 +282,9 @@ class WuParty
     #   - limiting:
     #   entries(:limit => 5)
     #
+    #   - paging (max pageSize is 100):
+    #   entries(:pageStart => 200, :pageSize => 100)
+    #
     # See http://wufoo.com/docs/api/v3/entries/get/#filter for details
     def entries(options={})
       query = {}
@@ -297,6 +300,14 @@ class WuParty
         query[:pageSize] = options[:limit]
         query[:pageStart] = 0
       end
+      
+      if options[:pageStart]
+        query[:pageStart] = options[:pageStart]
+      end
+      
+      if options[:pageSize]
+        query[:pageSize] = options[:pageSize]
+      end
 
       if options[:sort]
         field, direction = options[:sort].split(' ')
@@ -305,6 +316,19 @@ class WuParty
       end
 
       @party.get("forms/#{@id}/entries", :query => query)['Entries']
+    end
+    
+    def entry_count(options={})
+      query = {}
+
+      if options[:filters]
+        query['match'] = options[:filter_match] || 'AND'
+        options[:filters].each_with_index do |filter, index|
+          query["Filter#{ index + 1 }"] = filter.join(' ')
+        end
+      end
+
+      @party.get("forms/#{@id}/entries/count", :query => query)['EntryCount']
     end
 
     # Submit form data to the form.
